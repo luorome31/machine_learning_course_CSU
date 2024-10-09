@@ -59,6 +59,13 @@ def get_train_data(file_path='train.csv'):
 
     return X_train, Y_train
 
+def split_train_data(X_train, Y_train, ratio=0.8):
+    """
+    划分训练集和验证集
+    """
+    num_train = int(X_train.shape[0] * ratio)
+    X_train, Y_train, X_val, Y_val = X_train[:num_train], Y_train[:num_train], X_train[num_train:], Y_train[num_train:]
+    return X_train, Y_train, X_val, Y_val
 
 class LinearRegression:
     """
@@ -69,6 +76,14 @@ class LinearRegression:
         self.iterations = iterations
         self.weights = None
 
+    def evaluate_model(self, X_val, Y_val):
+        """
+        评估模型在验证集上的性能
+        :return: 均方误差 (MSE)
+        """
+        predictions = self.predict(X_val)
+        mse = np.mean((predictions - Y_val) ** 2)
+        return mse
     def gradient_descent(self, X, y):
         """
         使用普通梯度下降优化
@@ -83,6 +98,38 @@ class LinearRegression:
             if i % 10 == 0:
                 cost = np.mean(errors ** 2)
                 print(f'ordinary_gradient Iteration {i}, Cost: {cost}')
+
+
+    def adagrad_training_using_validation(self, X_train, Y_train, X_val, Y_val):
+        """
+        使用Adagrad优化，同时在验证集上评估模型性能
+        """
+        m, n = X_train.shape
+        self.weights = np.zeros(n)
+        grad_square = np.zeros(n)
+        mse_array = []
+
+
+        for i in range(self.iterations):
+            predictions = X_train.dot(self.weights)
+            errors = predictions - Y_train
+            gradients = 2 / m * X_train.T.dot(errors)
+
+            # 累加梯度平方
+            grad_square += gradients ** 2
+
+            # 计算Adagrad更新
+            ada = np.sqrt(grad_square + 1e-8)
+            self.weights -= self.learning_rate * gradients / ada
+
+            if i % 10 == 0:
+                cost = np.mean(errors ** 2)
+                print(f'adagrad Iteration {i}, Cost: {cost}')
+
+
+            mse_array.append(self.evaluate_model( X_val, Y_val))
+
+        return mse_array
 
     def adagrad(self, X, y):
         """
