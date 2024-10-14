@@ -1,10 +1,6 @@
 import csv
 import train_model
 
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 
