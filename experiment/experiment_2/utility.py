@@ -3,6 +3,9 @@ from collections import defaultdict
 
 import numpy as np
 
+from experiment_2.model import BayesianClassifier
+
+
 def standardize(data):
     """
     标准化数据
@@ -102,5 +105,31 @@ def check_need_one_hot_encoding(data):
 
 if __name__ == '__main__':
     X_train , y_train = process_data('train.csv')
+
+
+    def get_name():
+        yield 'training_mapping'
+        yield 'testing_mapping'
+
+
+    if __name__ == '__main__':
+        X_train, y_train = process_data('train.csv')
+
+        X_train = standardize(X_train)
+        model = BayesianClassifier()
+        model.fit(X_train, y_train)
+        X_test = process_data('test.csv')
+        X_test = standardize(X_test)
+        y_pred = model.predict(X_test)
+
+        y_result = [1 if pred > 0.5 else 0 for pred in y_pred]
+
+        # 可视化预测结果
+        with open('result.csv', mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(['id', 'label'])
+            for i, label in enumerate(y_result):
+                writer.writerow([f'{i + 1}', label])
+        print('done')
 
     print('done')
