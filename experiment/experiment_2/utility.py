@@ -1,5 +1,7 @@
 import csv
 from collections import defaultdict
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix
 
 import numpy as np
 
@@ -102,6 +104,38 @@ def check_need_one_hot_encoding(data):
 #         for key,value in one_hot_mapping[13].items():
 #             file.write(f'{key}:{value}\n')
 
+
+def valuate_model():
+    X_train, y_train = process_data('train.csv')
+    X_train = standardize(X_train)
+    # 1. 分割数据集为训练集和测试集
+    X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+
+    # 2. 训练模型
+    classifier = BayesianClassifier()
+    classifier.fit(X_train, y_train)
+
+    # 3. 预测测试集
+    y_pred_prob = classifier.predict(X_test)
+
+    # 将预测的概率转化为二分类标签，0 或 1
+    y_pred = (y_pred_prob < 0.5).astype(int)
+
+    # 4. 评估模型性能
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_pred_prob)
+    conf_matrix = confusion_matrix(y_test, y_pred)
+
+    # 打印结果
+    print(f"Accuracy: {accuracy:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1 Score: {f1:.4f}")
+    print(f"ROC AUC: {roc_auc:.4f}")
+    print(f"Confusion Matrix: \n{conf_matrix}")
 
 if __name__ == '__main__':
     X_train , y_train = process_data('train.csv')
