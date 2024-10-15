@@ -3,7 +3,13 @@ from collections import defaultdict
 
 import numpy as np
 
-
+def standardize(data):
+    """
+    标准化数据
+    """
+    mean = np.mean(data, axis=0)
+    std = np.std(data, axis=0)
+    return (data - mean) / std
 
 def process_data(file_name):
     if file_name == 'train.csv':
@@ -17,12 +23,27 @@ def process_train_data():
         reader = csv.reader(file)
         headers = next(reader)
         data = list(reader)
+        data = [row for row in data if row[-2] != ' Holand-Netherlands']
         y_train = [row[-1] for row in data]
-        data = [row[0:-1] for row in data]
+        data = [row[:-1] for row in data]
 
     y_train = [0 if str(label) == ' <=50K' else 1 for label in y_train]
 
-    # 根据check_need_one_hot_encoding函数的返回值判断是否需要进行独热编码
+    processed_data = one_hot_encoding(data)
+    return np.array(processed_data), np.array(y_train)
+
+
+def process_test_data():
+    with open("test.csv", mode='r') as file:
+        reader = csv.reader(file)
+        headers = next(reader)
+        data = list(reader)
+
+    processed_data = one_hot_encoding(data)
+    return np.array(processed_data)
+
+def one_hot_encoding(data):
+
     need_encoding = check_need_one_hot_encoding(data)
     categorical_columns = [i for i, need in enumerate(need_encoding) if need]
     continuous_columns = [i for i, need in enumerate(need_encoding) if not need]
@@ -37,7 +58,9 @@ def process_train_data():
     one_hot_mapping = {}
     for col, values in unique_values.items():
         one_hot_mapping[col] = {val: idx for idx, val in enumerate(values)}
-
+    #
+    # # 记录每一列的独热编码长度,并保存到文件
+    # count_one_hot_encoding_length(get_name(),one_hot_mapping)
     # 进行独热编码
     processed_data = []
     for row in data:
@@ -49,19 +72,14 @@ def process_train_data():
                 elif str(value).strip()=="Female":
                     new_row.append(0)
                 else:
-                    new_row.append(int(value))
+                    new_row.append(float(value))
             elif i in categorical_columns:
                 one_hot_encoded = [0] * len(one_hot_mapping[i])
                 one_hot_encoded[one_hot_mapping[i][value]] = 1
                 new_row.extend(one_hot_encoded)
         processed_data.append(new_row)
 
-    return np.array(processed_data), np.array(y_train)
-
-
-def process_test_data():
-    pass
-
+    return np.array(processed_data)
 
 def check_need_one_hot_encoding(data):
     first_row = data[0]
@@ -76,6 +94,10 @@ def check_need_one_hot_encoding(data):
             need_encoding.append(False)
     return need_encoding
 
+# def count_one_hot_encoding_length(filename,one_hot_mapping):
+#     with open(f'{next(filename)}.txt', 'w') as file:
+#         for key,value in one_hot_mapping[13].items():
+#             file.write(f'{key}:{value}\n')
 
 
 if __name__ == '__main__':
