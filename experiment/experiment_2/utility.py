@@ -5,7 +5,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 import numpy as np
 
-from experiment_2.model import BayesianClassifier
+from experiment_2.model import BayesianClassifier, BayesianClassifierEvaluation
 
 
 def standardize(data):
@@ -118,52 +118,39 @@ def valuate_model():
     # 3. 预测测试集
     y_pred_prob = classifier.predict(X_test)
 
-    # 将预测的概率转化为二分类标签，0 或 1
-    y_pred = (y_pred_prob < 0.5).astype(int)
+    evaluator = BayesianClassifierEvaluation(y_pred_prob,y_test)
+    evaluator.calc_metrics()
 
-    # 4. 评估模型性能
-    accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
-    roc_auc = roc_auc_score(y_test, y_pred_prob)
-    conf_matrix = confusion_matrix(y_test, y_pred)
+    evaluator.plot_metrics_vs_threshold()
+    evaluator.plot_confusion_matrix()
 
-    # 打印结果
-    print(f"Accuracy: {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall: {recall:.4f}")
-    print(f"F1 Score: {f1:.4f}")
-    print(f"ROC AUC: {roc_auc:.4f}")
-    print(f"Confusion Matrix: \n{conf_matrix}")
+
+
+
+
+def get_name():
+    yield 'training_mapping'
+    yield 'testing_mapping'
+
 
 if __name__ == '__main__':
-    X_train , y_train = process_data('train.csv')
+    valuate_model()
+    X_train, y_train = process_data('train.csv')
 
+    X_train = standardize(X_train)
+    model = BayesianClassifier()
+    model.fit(X_train, y_train)
+    X_test = process_data('test.csv')
+    X_test = standardize(X_test)
+    y_pred = model.predict(X_test)
 
-    def get_name():
-        yield 'training_mapping'
-        yield 'testing_mapping'
+    y_result = [1 if pred > 0.5 else 0 for pred in y_pred]
 
-
-    if __name__ == '__main__':
-        X_train, y_train = process_data('train.csv')
-
-        X_train = standardize(X_train)
-        model = BayesianClassifier()
-        model.fit(X_train, y_train)
-        X_test = process_data('test.csv')
-        X_test = standardize(X_test)
-        y_pred = model.predict(X_test)
-
-        y_result = [1 if pred > 0.5 else 0 for pred in y_pred]
-
-        # 可视化预测结果
-        with open('result.csv', mode='w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(['id', 'label'])
-            for i, label in enumerate(y_result):
-                writer.writerow([f'{i + 1}', label])
-        print('done')
-
+    # 可视化预测结果
+    with open('result.csv', mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['id', 'label'])
+        for i, label in enumerate(y_result):
+            writer.writerow([f'{i + 1}', label])
     print('done')
+
